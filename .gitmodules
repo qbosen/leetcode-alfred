@@ -1,0 +1,4 @@
+[submodule "workflow"]
+	path = workflow
+	url = git@github.com:qbosen/alfred-workflow-py3-pure.git
+	branch = main
