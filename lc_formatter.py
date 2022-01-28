@@ -30,7 +30,7 @@ def logseq_note(title: str, slug: str, front_id: str, difficulty: str, tags: typ
         """)
 
 
-def logseq_note(question: Question, cn=True) -> str:
+def logseq_question_note(question: Question, cn=True) -> str:
     get_tag_name: typing.Callable[[TopicTag], str] = lambda t: t.nameTranslated if cn else t.name
     note = logseq_note(
         title=question.titleCn if cn else question.title,

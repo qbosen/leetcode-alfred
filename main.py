@@ -1,56 +1,56 @@
-import sys
 import argparse
+import sys
 
-import workflow.workflow3
-from workflow import Workflow3
+import web_query
+import workflow
 from lc_struct import Question, Difficulty
-
-parser = argparse.ArgumentParser(prog='leetcode', description='查询/搜索leetcode题目，复制为笔记，导航至网页')
-parser.add_argument('today', action='store_true', help='获取每日一题')
-parser.add_argument('query', action='store', nargs='*', help='搜索关键字')
-parser.add_argument('reload', action='store_true', help='更新题目列表缓存')
+from workflow.background import run_in_background, is_running
 
 
-def main(_):
-    import question_provider as provider
+def main(wf: workflow.Workflow3):
+    parser = argparse.ArgumentParser(prog='leetcode', description='查询/搜索leetcode题目，复制为笔记，导航至网页')
+    parser.add_argument('query', action='store', nargs='*', help='搜索关键字')
+    parser.add_argument('--today', action='store_true', help='获取每日一题')
+    args = parser.parse_args(wf3.args)
+    wf.logger.debug("args: %s", args)
+
+    def add_item(q: Question):
+        """
+        加载返回结果
+        """
+        import lc_formatter
+        icon_dic = {
+            Difficulty.Easy: 'icon/easy.png',
+            Difficulty.Medium: 'icon/medium.png',
+            Difficulty.Hard: 'icon/hard.png',
+        }
+        return wf.add_item(
+            title=f'[{q.frontendQuestionId}] {q.titleCn}',
+            subtitle=f'[{round(q.acRate, 2)}] {q.title}',
+            arg=q.titleSlug,
+            valid=True,
+            icon=icon_dic[q.difficulty],
+            copytext=lc_formatter.logseq_question_note(q, cn=True),
+            quicklookurl=lc_formatter.leetcode_url(q.titleSlug)
+        )
+
+    # 每日一题
     if args.today:
-        add_item(provider.today_question())
+        add_item(web_query.question_of_today())
+    # 关键字查询
     elif args.query:
-        items = provider.load_questions()
+        # 从缓存终获取结果
         query_words = ' '.join(args.query)
-        # 按 题号，英文标题，中文标题 组合搜索关键字
-        for filtered in wf.filter(
-                query_words, items,
-                key=lambda q: q.frontendQuestionId + q.title + q.titleCn,
-                max_results=20):
-            add_item(filtered)
-    elif args.reload:
-        provider.load_questions(force_reload=True)
+        items = wf.cached_data(f'q::{query_words}',
+                               lambda: web_query.query_keyword(query_words),
+                               max_age=7 * 24 * 60 * 60)
+        for item in items:
+            add_item(item)
 
     wf.warn_empty('No result found!', 'Try other inputs...', icon='icon/wrong.png')
     wf.send_feedback()
 
 
-def add_item(q: Question) -> workflow.workflow3.Item3:
-    import lc_formater
-    icon_dic = {
-        Difficulty.Easy: 'icon/easy.png',
-        Difficulty.Medium: 'icon/medium.png',
-        Difficulty.Hard: 'icon/hard.png',
-    }
-    return wf.add_item(
-        title=f'[{q.frontendQuestionId}] {q.titleCn}',
-        subtitle=f'[{round(q.acRate, 2)}] {q.title}',
-        arg=q.titleSlug,
-        valid=True,
-        icon=icon_dic[q.difficulty],
-        copytext=lc_formater.logseq_note(q, cn=True),
-        quicklookurl=lc_formater.leetcode_url(q.titleSlug)
-    )
-
-
 if __name__ == '__main__':
-    wf = Workflow3()
-    args = parser.parse_args(wf.args)
-    log = wf.logger
-    sys.exit(wf.run(main))
+    wf3 = workflow.Workflow3()
+    sys.exit(wf3.run(main))
