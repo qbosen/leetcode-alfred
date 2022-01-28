@@ -1,7 +1,11 @@
+"""
+interact with leetcode api
+query today's question or query keyword
+and load question list
+"""
 import http.client
 import json
 import typing
-from pprint import pprint
 
 import dotdict
 from lc_struct import Question, Difficulty, TopicTag
@@ -125,4 +129,6 @@ def _question_of_today() -> dict:
 
 
 if __name__ == '__main__':
+    from pprint import pprint
+
     pprint(_question_of_today())
