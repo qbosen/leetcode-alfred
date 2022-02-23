@@ -22,10 +22,10 @@ def logseq_note(title: str, slug: str, front_id: str, difficulty: str, tags: typ
 
     return textwrap.dedent(f"""\
     - Leetcode/[{front_id}] {title}
-        - url:: [{title}]({leetcode_url(slug)})
-          lc-no:: {front_id}
-          lc-difficulty:: {difficulty.capitalize()}
-          lc-tags:: {' '.join([f"[[{tag}]]" for tag in tags])}
+      url:: [{title}]({leetcode_url(slug)})
+      lc-no:: {front_id}
+      lc-difficulty:: {difficulty.capitalize()}
+      lc-tags:: {' '.join([f"[[{tag}]]" for tag in tags])}
         - [[{date_str}]]
         """)
 
